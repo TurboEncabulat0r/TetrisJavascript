@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body {
+            background-color: dimgray;
+        }
+
+        .block {
+            width: 50px;
+            height: 50px;
+            background-color: deepskyblue;
+        }
+
+        #board {
+            margin-left: auto;
+            margin-right: auto;
+            width: 500px;
+            height: 1000px;
+            background-color: rgb(22,22,22);
+        }
+
+    </style>
+    <title></title>
+</head>
+<body>
+    <center>
+        <canvas id="game" width="450" height="900" style="background-color:black"></canvas>
+    </center>
+    <script>
+        // keep objects virtual
+        // only draw frames when they are needed
+
+
+        const shape1 = [[".x..",
+                        ".x..",
+                        ".x..",
+                        ".x.."],
+                       ["....",
+                        "xxxx",
+                        "....",
+                "...."]]
+
+        const shape2 = [["....",
+                        "..x.",
+                        ".xxx",
+                        "...."],
+
+                        ["....",
+                        "xxxx",
+                        "....",
+                        "...."]]
+
+        const canvas = document.getElementById("game")
+        const context = canvas.getContext('2d');
+
+
+
+        class Shape {
+            constructor(x, y, shape) {
+                this.x = x
+                this.y = y
+                this.rotation = 0
+                this.shape = shape
+            }
+
+            DrawSquare(x, y, width, height) {
+                
+                context.beginPath();
+                context.rect(x, y, width, height)
+                context.fill();
+            }
+
+
+            Move(x, y) {
+                for (let y = 0; y < this.shape[this.rotation].length; y++) {
+                    for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
+                        if (this.shape[this.rotation][y][x] == 'x') {
+                            let rx = x + this.x;
+                            let ry = y + this.y;
+
+                            if (ry >= 19) {
+                                return false
+                            }
+
+                        }
+                    }
+                }
+
+                this.x += x;
+                this.y += y;
+            }
+
+
+            convertShape() {
+                for (let y = 0; y < shape[this.rotation].length; y++) {
+                    for (let x = 0; x < shape[this.rotation][y].length; x++) {
+                        if (shape[this.rotation][y][x] == 'x') {
+                            //blocks.push(new Block(x, y, 100));
+                        }
+                    }
+                }
+            }
+
+            rotate() {
+                this.rotation++
+                if (this.rotation > shape.length)
+                    this.rotation = 0;
+            }
+
+            draw() {
+                for (let y = 0; y < this.shape[this.rotation].length; y++) {
+                    for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
+                        if (this.shape[this.rotation][y][x] == 'x') {
+                            DrawSquare(x + this.x, y + this.y, 45);
+                            
+                        }
+                    }
+                }
+            }
+        }
+
+        function DrawSquare(x, y, width) {
+            console.log("square drawn at " + x + ", " + y);
+            context.beginPath();
+            context.fillStyle = "red";
+            context.rect(x * 45, y * 45, width, width)
+            context.fill();
+        }
+
+        currentShape = new Shape(3, 3, shape2)
+        pos = 0
+        function updateDisplay() {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            
+            currentShape.draw();
+            currentShape.Move(0, 1);
+            
+        }
+
+        // 19
+
+        function gameLoop() {
+            updateDisplay()
+        }
+
+        var id = window.setInterval(gameLoop, 200);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.keyCode == 37) {
+                currentShape.Move(-1, 0)
+            }
+            else if (event.keyCode == 39) {
+                currentShape.Move(1, 0)
+            }
+        });
+
+
+
+
+    </script>
+</body>
+</html>
