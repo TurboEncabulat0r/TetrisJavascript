@@ -7,5 +7,6 @@ it also should be possible to embed this in relitivly any website.
 
 ### Todo:
 1. Add support for dynamic scaling
-2. Fix colors on the map
-3. optimise
+2. add scores
+3. orginise code
+4. optimise
