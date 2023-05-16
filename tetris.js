@@ -89,10 +89,29 @@ const shape7 = [["....",
                 "...."]]
 
 const shapes = [shape1, shape2, shape3, shape4, shape5, shape6, shape7]
-const colors = ["rgba(0, 255, 255, 1)", "rgba(240, 0, 255, 1)", "rgba(255, 183, 0, 1)", "rgba(0, 0, 255, 1)", "rgba(255, 255, 0, 1)", "rgba(255, 0, 0, 1)", "rgba(0, 255, 0, 1)"]
 
 const canvas = document.getElementById("game")
 const context = canvas.getContext('2d');
+
+
+class color{
+    constructor(r, g, b, a){
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+
+    get() {
+        return "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + this.a + ")";
+    }
+
+    ghost() {
+        return "rgba(" + this.r + ", " + this.g + ", " + this.b + ", " + 0.5 + ")";
+    }
+}
+
+const colors = [new color(0, 255, 255, 1), new color(240, 0, 255, 1), new color(255, 183, 0, 1), new color(0, 0, 255, 1), new color(255, 255, 0, 1), new color(255, 0, 0, 1), new color(0, 255, 0, 1)]
 
 
 String.prototype.replaceAt = function (index, replacement) {
@@ -107,15 +126,22 @@ class grid{
     }
 
     makeMatrix() {
+        let temp = []
         for (let y = 0; y < 20; y++) {
-            this.matrix.push(this.blankString);
+            temp.push(this.blankString);
         }
+        this.matrix = temp;
     }
 
     addToMatrix(x, y, c) {
-        let str = this.matrix[y]
-        str = str.replaceAt(x, c)
-        this.matrix[y] = str
+        try {
+            let str = this.matrix[y]
+            str = str.replaceAt(x, c)
+            this.matrix[y] = str
+        }
+        catch {
+            gameOver();
+        }
     }
 
     getColor(char) {
@@ -126,10 +152,14 @@ class grid{
         for (let y = 0; y < this.matrix.length; y++) {
             for (let x = 0; x < this.matrix[y].length; x++) {
                 if (this.matrix[y][x] != '.') {
-                    DrawSquare(x, y, 45, this.getColor(this.matrix[y][x]));
+                    DrawSquare(x, y, 45, this.getColor(this.matrix[y][x]).get());
                 }
             }
         }
+    }
+
+    reset() {
+        this.makeMatrix();
     }
 
     isFilled(x, y) {
@@ -233,6 +263,12 @@ class Shape {
         }
     }
 
+    placeGhost() {
+        while (this.Move(0, 1)) {
+            continue;
+        }
+    }
+
     drop() {
         while (this.Move(0, 1)) {
             continue;
@@ -261,11 +297,21 @@ class Shape {
 
     }
 
+    drawGhost() {
+        for (let y = 0; y < this.shape[this.rotation].length; y++) {
+            for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
+                if (this.shape[this.rotation][y][x] == 'x') {
+                    DrawSquare(x + this.x, y + this.y, 45, colors[this.color].ghost());
+                }
+            }
+        }
+    }
+
     draw() {
         for (let y = 0; y < this.shape[this.rotation].length; y++) {
             for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
                 if (this.shape[this.rotation][y][x] == 'x') {
-                    DrawSquare(x + this.x, y + this.y, 45, colors[this.color]);
+                    DrawSquare(x + this.x, y + this.y, 45, colors[this.color].get());
                 }
             }
         }
@@ -275,6 +321,7 @@ class Shape {
 var currentShape = 0
 var nextShape = 0
 var heldShape = 0
+var ghost = 0
 pos = 0
 
 grid = new grid();
@@ -284,14 +331,26 @@ var holds = 0;
 function renderLoop() {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
+    ghost = new Shape(currentShape.x, currentShape.y, currentShape.shape, currentShape.color);
+
+    ghost.rotation = currentShape.rotation;
+
+    ghost.placeGhost();
+    ghost.drawGhost();
 
     currentShape.draw();
     nextShape.draw();
+
+    if (heldShape != 0)
+        heldShape.draw();
+
     grid.draw();
 
     drawRect(0, 0, 45 * 10, 45 * 20, "gray")
 
     drawRect(480, 50, 45 * 4.3, 45 * 4.3, "gray")
+
+    drawRect(480, 275, 45 * 4.3, 45 * 4.3, "gray")
 }
 
 function getNewShape() {
@@ -307,6 +366,13 @@ function getNewShape() {
 function getTime() {
     d = new Date()
     return d.getTime();
+}
+
+function gameOver() {
+    grid.reset();
+    currentShape = 0;
+    getNewShape();
+    heldShape = 0;
 }
 
 function drawRect(x, y, width, height, color) {
@@ -341,6 +407,14 @@ function gameLoop() {
 }
 
 function holdShape() {
+    if (heldShape == 0) {
+        heldShape = currentShape;
+        getNewShape();
+        heldShape.rotation = 0;
+        heldShape.x = 10.3;
+        heldShape.y = 6.3;
+        return
+    }
     if (holds >= 1)
         return
     holds += 1;
@@ -349,7 +423,7 @@ function holdShape() {
     temp.x = 3;
     temp.y = -2;
     heldShape.x = 10.3;
-    heldShape.y = 3;
+    heldShape.y = 6.3;
     currentShape = temp;
 }
 
@@ -393,7 +467,6 @@ document.addEventListener('keydown', function (event) {
     }
     else if (event.keyCode == 16) {
         holdShape();
-        console.log("d")
     }
 });
 
