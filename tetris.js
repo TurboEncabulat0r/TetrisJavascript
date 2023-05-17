@@ -88,11 +88,6 @@ const shape7 = [["....",
                 ".x..",
                 "...."]]
 
-const shapes = [shape1, shape2, shape3, shape4, shape5, shape6, shape7]
-
-const canvas = document.getElementById("game")
-const context = canvas.getContext('2d');
-
 
 class color{
     constructor(r, g, b, a){
@@ -111,12 +106,6 @@ class color{
     }
 }
 
-const colors = [new color(0, 255, 255, 1), new color(240, 0, 255, 1), new color(255, 183, 0, 1), new color(0, 0, 255, 1), new color(255, 255, 0, 1), new color(255, 0, 0, 1), new color(0, 255, 0, 1)]
-
-
-String.prototype.replaceAt = function (index, replacement) {
-    return this.substring(0, index) + replacement + this.substring(index + replacement.length);
-}
 
 class grid{
     constructor(){
@@ -134,14 +123,9 @@ class grid{
     }
 
     addToMatrix(x, y, c) {
-        try {
-            let str = this.matrix[y]
-            str = str.replaceAt(x, c)
-            this.matrix[y] = str
-        }
-        catch {
-            gameOver();
-        }
+        let str = this.matrix[y];
+        str = str.replaceAt(x, c);
+        this.matrix[y] = str;
     }
 
     getColor(char) {
@@ -211,7 +195,6 @@ class grid{
 }
 
 
-
 class Shape {
     constructor(x, y, shape, color) {
         this.x = x
@@ -251,14 +234,20 @@ class Shape {
 
     placeShape() {
         for (let y = 0; y < this.shape[this.rotation].length; y++) {
-            for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
-                if (this.shape[this.rotation][y][x] == 'x') {
-                    let rx = this.x + x;
-                    let ry = this.y + y;
-                    let clr = String.fromCharCode(this.color + 48)
-                    grid.addToMatrix(rx, ry, clr);
+            try{
+                for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
+                    if (this.shape[this.rotation][y][x] == 'x') {
+                        let rx = this.x + x;
+                        let ry = this.y + y;
+                        let clr = String.fromCharCode(this.color + 48)
+                        grid.addToMatrix(rx, ry, clr);
 
+                    }
                 }
+            }
+            catch{
+                gameOver();
+                break;
             }
         }
     }
@@ -318,24 +307,43 @@ class Shape {
     }
 }
 
+const shapes = [shape1, shape2, shape3, shape4, shape5, shape6, shape7]
+
+const canvas = document.getElementById("game")
+const context = canvas.getContext('2d');
+
+const colors = [new color(0, 255, 255, 1), new color(240, 0, 255, 1), new color(255, 183, 0, 1), new color(0, 0, 255, 1), new color(255, 255, 0, 1), new color(255, 0, 0, 1), new color(0, 255, 0, 1)]
+
+var paused = false;
+
 var currentShape = 0
 var nextShape = 0
 var heldShape = 0
 var ghost = 0
+
 pos = 0
 
 grid = new grid();
 
 var holds = 0;
 
+
+String.prototype.replaceAt = function (index, replacement) {
+    return this.substring(0, index) + replacement + this.substring(index + replacement.length);
+}
+
+function getTime() {
+    d = new Date()
+    return d.getTime();
+}
+
 function renderLoop() {
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     ghost = new Shape(currentShape.x, currentShape.y, currentShape.shape, currentShape.color);
-
     ghost.rotation = currentShape.rotation;
-
     ghost.placeGhost();
+
     ghost.drawGhost();
 
     currentShape.draw();
@@ -347,13 +355,17 @@ function renderLoop() {
     grid.draw();
 
     drawRect(0, 0, 45 * 10, 45 * 20, "gray")
-
     drawRect(480, 50, 45 * 4.3, 45 * 4.3, "gray")
-
     drawRect(480, 275, 45 * 4.3, 45 * 4.3, "gray")
 }
 
 function getNewShape() {
+    if (nextShape == 0) {
+        let num = Math.floor(Math.random() * shapes.length);
+        let s = shapes[num];
+        nextShape = new Shape(10.3, 1.2, s, num);
+    }
+
     currentShape = nextShape;
     currentShape.x = 3;
     currentShape.y = -2;
@@ -363,15 +375,11 @@ function getNewShape() {
     grid.checkLines();
 }
 
-function getTime() {
-    d = new Date()
-    return d.getTime();
-}
-
 function gameOver() {
     grid.reset();
     currentShape = 0;
-    getNewShape();
+    ghost = 0;
+    nextShape = 0;
     heldShape = 0;
 }
 
@@ -398,10 +406,12 @@ function placeShape() {
 
 let lastPlayerInput = 0
 function gameLoop() {
+    if (paused)
+        return;
+
     if (!currentShape.Move(0, 1)) {
         if (lastPlayerInput < getTime()) {
             placeShape();
-
         }
     }
 }
@@ -428,23 +438,28 @@ function holdShape() {
 }
 
 lastMoveTs = 0;
-let d = new Date();
 function moveBlock(dir) {
-    d = new Date();
-    if (lastMoveTs < d.getTime()) {
-        lastMoveTs = d.getTime() + 40;
+    if (paused)
+        return;
+
+    if (lastMoveTs < getTime()) {
+        lastMoveTs = getTime() + 40;
         currentShape.Move(dir, 0);
         return;
     }
 }
 
 getNewShape();
-getNewShape();
+
 console.log("starting loops")
-var id = window.setInterval(renderLoop, 10);
-var id = window.setInterval(gameLoop, 200);
+window.setInterval(renderLoop, 10);
+window.setInterval(gameLoop, 200);
 
 document.addEventListener('keydown', function (event) {
+    if (paused){
+        console.log(grid.matrix)
+    }
+
     if (event.keyCode == 37) {
         moveBlock(-1);
     }
@@ -469,4 +484,3 @@ document.addEventListener('keydown', function (event) {
         holdShape();
     }
 });
-
