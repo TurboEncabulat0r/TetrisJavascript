@@ -173,6 +173,8 @@ class grid{
             }
             if (isFull) {
                 this.clearLine(y);
+                score += 100;
+                speed -= 5;
             }
         }
     }
@@ -321,6 +323,8 @@ var nextShape = 0
 var heldShape = 0
 var ghost = 0
 
+let score = 0;
+let highScore = 0;
 pos = 0
 
 grid = new grid();
@@ -357,6 +361,14 @@ function renderLoop() {
     drawRect(0, 0, 45 * 10, 45 * 20, "gray")
     drawRect(480, 50, 45 * 4.3, 45 * 4.3, "gray")
     drawRect(480, 275, 45 * 4.3, 45 * 4.3, "gray")
+
+    context.font = "37px serif";
+    context.fillStyle = "white";
+    context.fillText("Score: " + score, 475, 525)
+
+    context.font = "20px serif";
+    context.fillStyle = "white";
+    context.fillText("High Score: " + highScore, 475, 560)
 }
 
 function getNewShape() {
@@ -381,6 +393,10 @@ function gameOver() {
     ghost = 0;
     nextShape = 0;
     heldShape = 0;
+    if (score > highScore)
+        highScore = score;
+    speed = 400;
+    score = 0;
 }
 
 function drawRect(x, y, width, height, color) {
@@ -402,13 +418,20 @@ function placeShape() {
     currentShape.placeShape();
     getNewShape();
     holds = 0;
+    score += 10;
 }
 
 let lastPlayerInput = 0
+let gameUpdateTs = 0;
+let speed = 400;
 function gameLoop() {
     if (paused)
         return;
+    if (gameUpdateTs > getTime()) 
+        return
 
+    gameUpdateTs = getTime() + speed;
+    
     if (!currentShape.Move(0, 1)) {
         if (lastPlayerInput < getTime()) {
             placeShape();
@@ -453,25 +476,25 @@ getNewShape();
 
 console.log("starting loops")
 window.setInterval(renderLoop, 10);
-window.setInterval(gameLoop, 200);
+window.setInterval(gameLoop, 10);
 
 document.addEventListener('keydown', function (event) {
     if (paused){
         console.log(grid.matrix)
     }
 
-    if (event.keyCode == 37) {
+    if (event.keyCode == 37 || event.keyCode == 65) {
         moveBlock(-1);
     }
-    else if (event.keyCode == 39) {
+    else if (event.keyCode == 39 || event.keyCode == 68) {
         moveBlock(1);
         lastPlayerInput = getTime() + 1000;
     }
-    else if (event.keyCode == 38) {
+    else if (event.keyCode == 38 || event.keyCode == 87) {
         currentShape.rotate();
         lastPlayerInput = getTime() + 1000;
     }
-    else if (event.keyCode == 40) {
+    else if (event.keyCode == 40 || event.keyCode == 83) {
         currentShape.Move(0, 1);
         lastPlayerInput = getTime() + 1000;
     }
@@ -479,8 +502,9 @@ document.addEventListener('keydown', function (event) {
         currentShape.drop();
         getNewShape()
         holds = 0;
+        score += 10;
     }
-    else if (event.keyCode == 16) {
+    else if (event.keyCode == 16 || event.keyCode == 67) {
         holdShape();
     }
 });
