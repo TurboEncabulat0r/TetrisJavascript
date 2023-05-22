@@ -465,6 +465,8 @@ function moveBlock(dir) {
     if (paused)
         return;
 
+    lastPlayerInput = getTime() + 1000;
+
     if (lastMoveTs < getTime()) {
         lastMoveTs = getTime() + 40;
         currentShape.Move(dir, 0);
