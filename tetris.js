@@ -89,6 +89,8 @@ const shape7 = [["....",
                 "...."]]
 
 
+blockWidth = 45
+
 class color{
     constructor(r, g, b, a){
         this.r = r;
@@ -136,7 +138,7 @@ class grid{
         for (let y = 0; y < this.matrix.length; y++) {
             for (let x = 0; x < this.matrix[y].length; x++) {
                 if (this.matrix[y][x] != '.') {
-                    DrawSquare(x, y, 45, this.getColor(this.matrix[y][x]).get());
+                    DrawSquare(x, y, blockWidth, this.getColor(this.matrix[y][x]).get());
                 }
             }
         }
@@ -292,7 +294,7 @@ class Shape {
         for (let y = 0; y < this.shape[this.rotation].length; y++) {
             for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
                 if (this.shape[this.rotation][y][x] == 'x') {
-                    DrawSquare(x + this.x, y + this.y, 45, colors[this.color].ghost());
+                    DrawSquare(x + this.x, y + this.y, blockWidth, colors[this.color].ghost());
                 }
             }
         }
@@ -302,7 +304,7 @@ class Shape {
         for (let y = 0; y < this.shape[this.rotation].length; y++) {
             for (let x = 0; x < this.shape[this.rotation][y].length; x++) {
                 if (this.shape[this.rotation][y][x] == 'x') {
-                    DrawSquare(x + this.x, y + this.y, 45, colors[this.color].get());
+                    DrawSquare(x + this.x, y + this.y, blockWidth, colors[this.color].get());
                 }
             }
         }
@@ -341,7 +343,10 @@ function getTime() {
     return d.getTime();
 }
 
+let deltaTime = 0;
+let deltaTimeTs = 0;
 function renderLoop() {
+    deltaTimeTs = getTime();
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     ghost = new Shape(currentShape.x, currentShape.y, currentShape.shape, currentShape.color);
@@ -358,17 +363,19 @@ function renderLoop() {
 
     grid.draw();
 
-    drawRect(0, 0, 45 * 10, 45 * 20, "gray")
-    drawRect(480, 50, 45 * 4.3, 45 * 4.3, "gray")
-    drawRect(480, 275, 45 * 4.3, 45 * 4.3, "gray")
+    drawRect(0, 0, blockWidth * 10, blockWidth * 20, "gray")
+    drawRect(10.667 * blockWidth, blockWidth * 0.8, blockWidth * 4.3, blockWidth * 4.3, "gray")
+    drawRect(blockWidth * 10.667, 6.1 * blockWidth, blockWidth * 4.3, blockWidth * 4.3, "gray")
 
-    context.font = "37px serif";
+    context.font = blockWidth * 0.8 + "px serif";
     context.fillStyle = "white";
-    context.fillText("Score: " + score, 475, 525)
+    context.fillText("Score: " + score, blockWidth * 10.556, blockWidth * 11.667)
 
-    context.font = "20px serif";
+    context.font = + blockWidth * 0.8 + "px serif";
     context.fillStyle = "white";
-    context.fillText("High Score: " + highScore, 475, 560)
+    context.fillText("High Score: " + highScore, blockWidth * 10.556, blockWidth * 13.556)
+
+    deltaTime = getTime() - deltaTimeTs;
 }
 
 function getNewShape() {
@@ -402,15 +409,15 @@ function gameOver() {
 function drawRect(x, y, width, height, color) {
     context.beginPath();
     context.strokeStyle = color;
-    context.lineWidth = "5"
-    context.rect(x, y, width, height)
+    context.lineWidth = blockWidth * 0.15 + "";
+    context.rect(x, y, width, height);
     context.stroke();
 }
 
 function DrawSquare(x, y, width, color) {
     context.beginPath();
     context.fillStyle = color;
-    context.rect(x * 45, y * 45, width, width)
+    context.rect(x * width, y * width, width, width)
     context.fill();
 }
 
@@ -464,8 +471,6 @@ lastMoveTs = 0;
 function moveBlock(dir) {
     if (paused)
         return;
-
-    lastPlayerInput = getTime() + 1000;
 
     if (lastMoveTs < getTime()) {
         lastMoveTs = getTime() + 40;
